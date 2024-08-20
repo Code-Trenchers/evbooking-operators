@@ -12,69 +12,66 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  //text editing controllers
+  // Text editing controllers
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  //sign user in method
+  // Password visibility toggle
+  bool _obscureText = true;
+
+  // Sign user in method
   void signUserIn() async {
-    //show loading circle
+    // Show loading circle
     showDialog(
-        context: context,
-        builder: (context) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        },
+      context: context,
+      builder: (context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
     );
 
-    //try sign in
+    // Try sign in
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text,
         password: passwordController.text,
       );
 
-      //pop the loading circle
-      //Navigator.pop(context);
+      // Pop the loading circle
+      Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
-      //pop the loading circle
-     // Navigator.pop(context);
-      //WRONG EMAIL
+      // Pop the loading circle
+      Navigator.pop(context);
+      // Handle errors
       if (e.code == 'user-not-found') {
-        //show error to the user
-        //wrongEmailMessage();
-        print('No user found for that mail');
-      }
-
-      //WRONG PASSWORD
-      else if (e.code == 'wrong-password') {
-        //show error to the user
-        //wrongPasswordMessage();
-        print('Wrong pwd buddy');
+        // Show error to the user
+        wrongEmailMessage();
+      } else if (e.code == 'wrong-password') {
+        // Show error to the user
+        wrongPasswordMessage();
       }
     }
-  Navigator.pop(context);
   }
 
-  //wrong email messsage popup
+  // Wrong email message popup
   void wrongEmailMessage() {
     showDialog(
-        context: context,
-        builder: (context) {
-          return const AlertDialog (
-            title: Text('Incorrect Email'),
-          );
-        },
+      context: context,
+      builder: (context) {
+        return const AlertDialog(
+          title: Text('Incorrect Email'),
+        );
+      },
     );
   }
 
-  //wrong password message
+  // Wrong password message
   void wrongPasswordMessage() {
     showDialog(
       context: context,
       builder: (context) {
-        return const AlertDialog (
+        return const AlertDialog(
           title: Text('Incorrect Password'),
         );
       },
@@ -86,9 +83,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: Colors.grey[300],
       body: SafeArea(
-
         child: Center(
-
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -103,8 +98,8 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 50),
 
               // Welcome back, you've been missed!
-              Text(''
-                  'Welcome back you\'ve been missed!',
+              Text(
+                'Welcome back you\'ve been missed!',
                 style: TextStyle(
                   color: Colors.grey[700],
                   fontSize: 16,
@@ -113,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 25),
 
-              // Username textfield
+              // Email textfield
               MyTextField(
                 controller: emailController,
                 hintText: 'Email',
@@ -122,11 +117,21 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 10),
 
-              // Password textfield
+              // Password textfield with show/hide option
               MyTextField(
                 controller: passwordController,
                 hintText: 'Password',
-                obscureText: true,
+                obscureText: _obscureText,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureText ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscureText = !_obscureText;
+                    });
+                  },
+                ),
               ),
 
               const SizedBox(height: 10),
@@ -165,7 +170,6 @@ class _LoginPageState extends State<LoginPage> {
                         color: Colors.grey[400],
                       ),
                     ),
-
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10.0),
                       child: Text(
@@ -175,9 +179,8 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     Expanded(
                       child: Divider(
-                        thickness: 0.5,
-                        color: Colors.grey[400],
-                      ),
+                          thickness: 0.5,
+                          color: Colors.grey[400]),
                     ),
                   ],
                 ),
@@ -189,12 +192,12 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
-                  //google button
+                  // Google button
                   SquareTile(imagePath: 'lib/images/google.png'),
 
                   SizedBox(width: 25),
 
-                  //apple button
+                  // Apple button
                   SquareTile(imagePath: 'lib/images/apple.png'),
                 ],
               ),
