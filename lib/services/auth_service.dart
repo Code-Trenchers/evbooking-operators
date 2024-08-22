@@ -1,28 +1,52 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:login_page/screens/home_screen.dart';
-import 'package:login_page/screens/login_or_register_screen.dart';
 
-class AuthService extends StatelessWidget {
-  const AuthService({super.key});
+class AuthService {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          //user is logged in
-          if(snapshot.hasData) {
-            return HomePage();
-          }
-
-          //user is NOT logged in
-          else {
-            return LoginOrRegisterPage();
-          }
-        },
-      ),
-    );
+  // Sign in with email and password
+  Future<User?> signIn(String email, String password) async {
+    try {
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+          email: email, password: password);
+      return result.user;
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
   }
+
+  Future<User?> signInWithCredential(AuthCredential credential) async {
+    try {
+      UserCredential result = await _auth.signInWithCredential(credential);
+      return result.user;
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
+  }
+
+  // Register with email and password
+  Future<User?> register(String email, String password) async {
+    try {
+      UserCredential result = await _auth.createUserWithEmailAndPassword(
+          email: email, password: password);
+      return result.user;
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
+  }
+
+  // Sign out
+  Future signOut() async {
+    try {
+      return await _auth.signOut();
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
+  }
+
+  // Get current user
+  User? get currentUser => _auth.currentUser;
 }

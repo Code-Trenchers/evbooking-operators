@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:login_page/screens/home_screen.dart';
+import 'package:login_page/screens/login_screen.dart';
 import 'package:login_page/services/auth_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -8,18 +10,20 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final AuthService authService = AuthService();
+
+  MyApp({super.key});
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: AuthService(),
+      home: authService.currentUser != null ? const HomeScreen() : const LoginScreen()
     );
   }
 }

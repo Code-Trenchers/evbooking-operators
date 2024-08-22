@@ -1,69 +1,104 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:login_page/screens/home_screen.dart';
+import 'package:login_page/services/auth_service.dart';
 import 'package:login_page/widgets/button_widget.dart';
+import 'package:login_page/widgets/error_widget.dart';
 import 'package:login_page/widgets/text_field_widget.dart';
 import 'package:login_page/widgets/square_tile_widget.dart';
 
-class LoginPage extends StatefulWidget {
-  final Function()? onTap;
-  const LoginPage({super.key, required this.onTap});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  // Text editing controllers
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-
-  // Password visibility toggle
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
   bool _obscureText = true;
+  String? _errorMessage; // State variable for error messages
 
-  // Sign user in method
-  void signUserIn() async {
-    // Show loading circle
-    showDialog(
-      context: context,
-      builder: (context) {
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
-      },
-    );
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
-    // Try sign in
+  Future<void> gmailLogin() async {
+    _showLoadingIndicator();
+
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text,
-        password: passwordController.text,
+      await _googleSignIn.signOut();
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return;  // If user canceled the sign-in
+
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
       );
 
-      // Pop the loading circle
-      Navigator.pop(context);
+      final User? user = await _authService.signInWithCredential(credential);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Remove loading indicator
+
+      if (user != null && user.email!.endsWith('@bitsathy.ac.in')) {
+        _navigateToHomePage();
+      } else {
+        await _authService.signOut();
+        await _googleSignIn.signOut();
+        if (!mounted) return;
+        setState(() {
+          _errorMessage = 'Sign in restricted to Bitsathy gmail';
+        });
+      }
     } on FirebaseAuthException catch (e) {
-      // Pop the loading circle
-      Navigator.pop(context);
-      //show error message
-      showErrorMessage(e.code);
+      Navigator.pop(context); // Remove loading indicator
+      setState(() {
+        _errorMessage = e.code;
+      });
     }
   }
 
-  // error message to user
-  void showErrorMessage(String message) {
+  void signUserIn() async {
+    _showLoadingIndicator();
+
+    try {
+      final String email = _emailController.text;
+      final String password = _passwordController.text;
+      final User? user = await _authService.signIn(email, password);
+
+      if (!mounted) return;
+
+      Navigator.pop(context); // Remove loading indicator
+      if (user != null) _navigateToHomePage();
+
+    } on FirebaseAuthException catch (e) {
+      Navigator.pop(context); // Remove loading indicator
+      setState(() {
+        _errorMessage = e.code;
+      });
+    }
+  }
+
+  void _navigateToHomePage() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
+  }
+
+  void _showLoadingIndicator() {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.deepPurple,
-          title: Center(
-            child: Text(
-              message,
-              style:const TextStyle(color: Colors.white),
-            ),
-          ),
-        );
-      },
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
   }
 
@@ -79,15 +114,13 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 const SizedBox(height: 50),
 
-                // Logo
                 const Icon(
                   Icons.lock,
                   size: 100,
-                ),
+                ), // Logo
 
                 const SizedBox(height: 50),
 
-                // Welcome back, you've been missed!
                 Text(
                   'Welcome back you\'ve been missed!',
                   style: TextStyle(
@@ -98,18 +131,16 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 25),
 
-                // Email textfield
                 MyTextField(
-                  controller: emailController,
+                  controller: _emailController,
                   hintText: 'Email',
                   obscureText: false,
                 ),
 
                 const SizedBox(height: 10),
 
-                // Password textfield with show/hide option
                 MyTextField(
-                  controller: passwordController,
+                  controller: _passwordController,
                   hintText: 'Password',
                   obscureText: _obscureText,
                   suffixIcon: IconButton(
@@ -126,7 +157,6 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 10),
 
-                // Forgot password
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Row(
@@ -142,14 +172,18 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 25),
 
-                // Sign in button
                 MyButton(
                   onTap: signUserIn,
                 ),
 
+                // Display error message if it exists
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 20),
+                  buildErrorMessage(_errorMessage!), // Use the error message function
+                ],
+
                 const SizedBox(height: 50),
 
-                // Or continue with
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Row(
@@ -169,8 +203,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       Expanded(
                         child: Divider(
-                            thickness: 0.5,
-                            color: Colors.grey[400],
+                          thickness: 0.5,
+                          color: Colors.grey[400],
                         ),
                       ),
                     ],
@@ -179,43 +213,15 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 50),
 
-                // Google + Apple sign in buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    // Google button
-                    SquareTile(imagePath: 'lib/images/google.png'),
-
-                    SizedBox(width: 25),
-
-                    // Apple button
-                    SquareTile(imagePath: 'lib/images/apple.png'),
-                  ],
-                ),
-
-                const SizedBox(height: 50),
-
-                // Not a member? Register now
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'Not a member',
-                      style: TextStyle(color: Colors.grey[700]),
-                    ),
-                    const SizedBox(width: 4),
                     GestureDetector(
-                      onTap: widget.onTap,
-                      child: const Text(
-                        'Register now',
-                        style: TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      ),
+                      onTap: gmailLogin,  // Correctly attach the gmailLogin method
+                      child: const SquareTile(imagePath: 'lib/images/google.png'),
+                    ),
                   ],
-                )
+                ),
               ],
             ),
           ),
