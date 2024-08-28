@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -6,21 +8,49 @@ import 'package:login_page/widgets/error_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-
   @override
   HomeScreenState createState() => HomeScreenState();
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  final User _user = FirebaseAuth.instance.currentUser!;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-  String? _errorMessage; // State variable for error messages
+  final String serverKey = "";
 
-  /// Signs the user out and navigates to the login screen
+  Future<void> sendMessage() async {
+    const postUrl = 'https://fcm.googleapis.com/fcm/send';
+    final data = {
+      "to": "RECEIVER_DEVICE_TOKEN", // Replace with receiver's FCM token
+      "notification": {
+        "title": "Message from App 1",
+        "body": "Hello from another app!",
+        "sound": "default",
+      },
+      "data": {
+        "click_action": "FLUTTER_NOTIFICATION_CLICK",
+        "message": "This is a message from App 1"
+      }
+    };
+
+    final headers = {
+      'content-type': 'application/json',
+      'Authorization': 'key=$serverKey',
+    };
+
+    final response = await http.post(
+      Uri.parse(postUrl),
+      body: json.encode(data),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      print('Message sent successfully');
+    } else {
+      print('Failed to send message');
+    }
+  }
+
+    /// Signs the user out and navigates to the login screen
   Future<void> signUserOut() async {
-    try {
       await FirebaseAuth.instance.signOut();
-      await _googleSignIn.signOut();
 
       if (!mounted) return; // Check if the widget is still mounted
 
@@ -29,8 +59,13 @@ class HomeScreenState extends State<HomeScreen> {
         MaterialPageRoute(builder: (context) => const LoginScreen()),
             (Route<dynamic> route) => false,
       );
-    } on FirebaseAuthException catch (e) {
-      _errorMessage = e.code;
+  }
+
+  void buttonAction() {
+    try {
+      print("Hello");
+    } catch (e) {
+      print(e);
     }
   }
 
@@ -50,15 +85,10 @@ class HomeScreenState extends State<HomeScreen> {
       body: Center(
         child: Column(
           children: [
-            Text(
-              "LOGGED IN AS: ${_user.displayName!}",
-              style: const TextStyle(fontSize: 18),
+            ElevatedButton(
+              onPressed: sendMessage,
+              child: Text('Send Message to App 2'),
             ),
-
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 20),
-              buildErrorMessage(_errorMessage!), // Use the error message function
-            ],
           ],
         ),
       ),
