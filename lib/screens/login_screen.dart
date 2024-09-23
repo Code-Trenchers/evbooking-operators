@@ -21,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   bool _obscureText = true;
-  String? _errorMessage; // State variable for error messages
+  String? _errorMessage; //State variable for error messages
 
   @override
   void dispose() {
@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await _googleSignIn.signOut();
       final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return;  // If user canceled the sign-in
+      if (googleUser == null) return; // If user canceled the sign-in
 
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
@@ -79,7 +79,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Navigator.pop(context); // Remove loading indicator
       if (user != null) _navigateToHomePage();
-
     } on FirebaseAuthException catch (e) {
       Navigator.pop(context); // Remove loading indicator
       setState(() {
@@ -179,7 +178,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Display error message if it exists
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 20),
-                  buildErrorMessage(_errorMessage!), // Use the error message function
+                  buildErrorMessage(
+                      _errorMessage!), // Use the error message function
                 ],
 
                 const SizedBox(height: 50),
@@ -217,8 +217,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     GestureDetector(
-                      onTap: gmailLogin,  // Correctly attach the gmailLogin method
-                      child: const SquareTile(imagePath: 'lib/images/google.png'),
+                      onTap:
+                          gmailLogin, // Correctly attach the gmailLogin method
+                      child:
+                          const SquareTile(imagePath: 'lib/images/google.png'),
                     ),
                   ],
                 ),
