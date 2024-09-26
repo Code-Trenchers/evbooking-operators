@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:login_page/screens/login_screen.dart';
@@ -28,19 +26,52 @@ class HomeScreenState extends State<HomeScreen> {
     if (_user != null) {
       String purpose = _selectedPurpose == 'Other' ? _otherPurposeText ?? 'Unknown' : _selectedPurpose ?? 'Unknown';
 
-      await _databaseService.createBooking(
-        _user!.uid,
-        _user!.displayName ?? 'Unknown',
-        _user!.email ?? 'Unknown',
-        _selectedLocation ?? 'Unknown',
-        _selectedDestination ?? 'Unknown',
-        _selectedDesignation ?? 'Unknown',
-        _selectedLuggageStatus ?? 'Unknown',
-        purpose,
-      );
-      print('Message sent successfully');
+      try {
+        await _databaseService.createBooking(
+          _user!.uid,
+          _user!.displayName ?? 'Unknown',
+          _user!.email ?? 'Unknown',
+          _selectedLocation ?? 'Unknown',
+          _selectedDestination ?? 'Unknown',
+          _selectedDesignation ?? 'Unknown',
+          _selectedLuggageStatus ?? 'Unknown',
+          purpose,
+        );
+        // Show success message
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Request submitted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        setState(() {
+          _selectedDesignation = null;
+          _selectedLuggageStatus = null;
+          _selectedPurpose = null;
+          _selectedLocation = null;
+          _otherPurposeText = null;
+          _selectedDestination = null;
+        });
+      } catch (e) {
+        if (!mounted) return;
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to submit request: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } else {
-      print('Failed to send message');
+    // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to submit request: User not logged in'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
