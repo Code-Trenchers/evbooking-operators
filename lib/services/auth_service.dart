@@ -37,4 +37,8 @@ class AuthService {
 
   // Get current user
   User? get currentUser => _auth.currentUser;
+
+  Future<User?> getCurrentUser() async {
+    return _auth.currentUser;
+  }
 }
