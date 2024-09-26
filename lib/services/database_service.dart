@@ -4,11 +4,11 @@ class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // Create a booking
-  Future<void> createBooking(String uId, String uName, String uPhone, String currentLocation, String destination, String designation, String luggage, String purpose) async {
+  Future<void> createBooking(String uId, String uName, String uEmail, String currentLocation, String destination, String designation, String luggage, String purpose) async {
     await _db.collection('bookings').add({
       'uId': uId,
       'uName': uName,
-      'uPhone': uPhone,
+      'uEmail': uEmail,
       'currentLocation': currentLocation,
       'destination': destination,
       'designation': designation,
