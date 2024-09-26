@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:login_page/screens/login_screen.dart';
+import 'package:login_page/services/database_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,11 +15,7 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   final String serverKey = "";
   User? _user;
-  List<Map<String, dynamic>> _requests = [];
-  List<Map<String, dynamic>> _approvedLogs = [];
-  List<bool> _approvedStatus = [];
-  int _approvalCount = 0;
-  int _cancellationCount = 0;
+  final DatabaseService _databaseService = DatabaseService();
 
 
 
@@ -27,38 +24,24 @@ class HomeScreenState extends State<HomeScreen> {
     super.initState();
     _user = FirebaseAuth.instance.currentUser;
 
-    _requests = [
-      {
-        'mailId': 'exa@mail.com',
-        'regNo': 'ABC1234',
-        'from': 'Campus A',
-        'to': 'Campus B',
-        'designation': 'Student',
-        'luggageStatus': 'Yes',
-        'specification': '',
-      },
-      {
-        'mailId': 'ple@mail.com',
-        'regNo': 'ABC1234',
-        'from': 'Campus A',
-        'to': 'Campus B',
-        'designation': 'Student',
-        'luggageStatus': 'Yes',
-        'specification': '',
-      },
-      {
-        'mailId': 'example@mail.com',
-        'regNo': 'ABC1234',
-        'from': 'Campus A',
-        'to': 'Campus B',
-        'designation': 'Student',
-        'luggageStatus': 'Yes',
-        'specification': '',
-      },
+  void _submitDetails() async {
+    if (_user != null) {
+      String purpose = _selectedPurpose == 'Other' ? _otherPurposeText ?? 'Unknown' : _selectedPurpose ?? 'Unknown';
 
-    ];
-    // Initialize the approval status list
-    _approvedStatus = List<bool>.filled(_requests.length, false);
+      await _databaseService.createBooking(
+        _user!.uid,
+        _user!.displayName ?? 'Unknown',
+        _user!.email ?? 'Unknown',
+        _selectedLocation ?? 'Unknown',
+        _selectedDestination ?? 'Unknown',
+        _selectedDesignation ?? 'Unknown',
+        _selectedLuggageStatus ?? 'Unknown',
+        purpose,
+      );
+      print('Message sent successfully');
+    } else {
+      print('Failed to send message');
+    }
   }
 
 
@@ -215,20 +198,197 @@ class HomeScreenState extends State<HomeScreen> {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: Column(
-          children: <Widget>[
-            // Top bar with rounded corners
-            Container(
-              margin: const EdgeInsets.all(16.0), // Margin around the bar
-              padding: const EdgeInsets.all(16.0), // Padding inside the bar
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20.0), // Rounded corners
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 8.0,
-                    offset: Offset(0, 4), // Shadow position
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Card(
+                elevation: 10,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Book Your Slot',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Dropdown for Current Location
+                      DropdownButtonFormField<String>(
+                        value: _selectedLocation,
+                        decoration: InputDecoration(
+                          labelText: 'Current Location',
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        items: _locations.map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (newValue) {
+                          setState(() {
+                            _selectedLocation = newValue;
+                            _selectedDestination = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Dropdown for Destination Location
+                      DropdownButtonFormField<String>(
+                        value: _selectedDestination,
+                        decoration: InputDecoration(
+                          labelText: 'Destination Location',
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        items: _locations
+                            .where((location) => location != _selectedLocation)
+                            .map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (newValue) {
+                          setState(() {
+                            _selectedDestination = newValue;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Designation
+                      DropdownButtonFormField<String>(
+                        value: _selectedDesignation,
+                        decoration: InputDecoration(
+                          labelText: 'Designation',
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        items: <String>['Student', 'Faculty', 'Technician']
+                            .map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (newValue) {
+                          setState(() {
+                            _selectedDesignation = newValue;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Luggage Status
+                      DropdownButtonFormField<String>(
+                        value: _selectedLuggageStatus,
+                        decoration: InputDecoration(
+                          labelText: 'Luggage Available Status',
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        items: <String>['Yes', 'No'].map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (newValue) {
+                          setState(() {
+                            _selectedLuggageStatus = newValue;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+
+                      if (_selectedLuggageStatus == 'No') ...[
+                        // Purpose Dropdown
+                        DropdownButtonFormField<String>(
+                          value: _selectedPurpose,
+                          decoration: InputDecoration(
+                            labelText: 'Purpose',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          items: <String>['Meeting', '.', '.', 'Other']
+                              .map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (newValue) {
+                            setState(() {
+                              _selectedPurpose = newValue;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Other Purpose Text Field
+                        if (_selectedPurpose == 'Other') ...[
+                          TextFormField(
+                            decoration: InputDecoration(
+                              labelText: 'Specify',
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onChanged: (text) {
+                              setState(() {
+                                _otherPurposeText = text;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ],
+
+                      // Submit Button with Ripple Effect
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 40, vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          backgroundColor: Colors.deepPurple,
+                          foregroundColor: Colors.white, 
+                        ),
+                        onPressed: _submitDetails,
+                        child: const Text('Submit'),
+                      ),
+                    ],
                   ),
                 ],
               ),
