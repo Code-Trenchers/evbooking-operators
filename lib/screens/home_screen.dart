@@ -13,6 +13,11 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   final String serverKey = "";
   User? _user;
+  List<Map<String, dynamic>> _requests = [];
+  final List<Map<String, dynamic>> _approvedLogs = [];
+  List<bool> _approvedStatus = [];
+  int _approvalCount = 0;
+  int _cancellationCount = 0;
   final DatabaseService _databaseService = DatabaseService();
 
 
@@ -153,7 +158,7 @@ class HomeScreenState extends State<HomeScreen> {
                   title: Text('Approved: ${log['mailId']}'),
                   subtitle: Text('From: ${log['from']} To: ${log['to']}'),
                 );
-              }).toList(),
+              }),
               if (_approvedLogs.length > 2) // Show a message if there are more than two
                 Text('And ${_approvedLogs.length - 2} more...'),
             ],
@@ -437,7 +442,7 @@ class HomeScreenState extends State<HomeScreen> {
                 itemCount: _requests.length,
                 itemBuilder: (context, index) {
                   if (_approvedStatus[index]) {
-                    return SizedBox.shrink(); // Skip approved requests
+                    return const SizedBox.shrink(); // Skip approved requests
                   }
                   return Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -445,7 +450,7 @@ class HomeScreenState extends State<HomeScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10.0),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
                           color: Colors.black26,
                           blurRadius: 5.0,
@@ -459,7 +464,7 @@ class HomeScreenState extends State<HomeScreen> {
                         Expanded( // Use Expanded here
                           child: Text(
                             '${index + 1}. Request from: ${_requests[index]['mailId']}',
-                            style: TextStyle(fontSize: 18.0),
+                            style: const TextStyle(fontSize: 18.0),
                             overflow: TextOverflow.ellipsis, // Prevent overflow
                             maxLines: 1, // Limit to one line
                           ),
