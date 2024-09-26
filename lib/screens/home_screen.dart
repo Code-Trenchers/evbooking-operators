@@ -141,7 +141,7 @@ class HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Ev-Logs'),
+          title: const Text('Ev Recent Logs'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -224,7 +224,7 @@ class HomeScreenState extends State<HomeScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.white, Colors.purpleAccent],
+            colors: [Colors.white, Colors.blueAccent],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
