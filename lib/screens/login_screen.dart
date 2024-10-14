@@ -88,6 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToHomePage() {
+    _googleSignIn.signOut();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const HomeScreen()),
