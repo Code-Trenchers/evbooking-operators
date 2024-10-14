@@ -21,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   bool _obscureText = true;
-  String? _errorMessage; //State variable for error messages
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await _googleSignIn.signOut();
       final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return; // If user canceled the sign-in
+      if (googleUser == null) return;
 
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final User? user = await _authService.signInWithCredential(credential);
 
       if (!mounted) return;
-      Navigator.pop(context); // Remove loading indicator
+      Navigator.pop(context);
 
       if (user != null && user.email!.endsWith('@bitsathy.ac.in')) {
         _navigateToHomePage();
@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     } on FirebaseAuthException catch (e) {
-      Navigator.pop(context); // Remove loading indicator
+      Navigator.pop(context);
       setState(() {
         _errorMessage = e.code;
       });
@@ -77,10 +77,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      Navigator.pop(context); // Remove loading indicator
+      Navigator.pop(context);
       if (user != null) _navigateToHomePage();
     } on FirebaseAuthException catch (e) {
-      Navigator.pop(context); // Remove loading indicator
+      Navigator.pop(context);
       setState(() {
         _errorMessage = e.code;
       });
@@ -117,8 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Icon(
                   Icons.lock,
                   size: 100,
-                ), // Logo
-
+                ),
                 const SizedBox(height: 50),
 
                 Text(
@@ -176,11 +175,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   onTap: signUserIn,
                 ),
 
-                // Display error message if it exists
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 20),
                   buildErrorMessage(
-                      _errorMessage!), // Use the error message function
+                      _errorMessage!),
                 ],
 
                 const SizedBox(height: 50),
@@ -219,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     GestureDetector(
                       onTap:
-                          gmailLogin, // Correctly attach the gmailLogin method
+                          gmailLogin,
                       child:
                           const SquareTile(imagePath: 'lib/images/google.png'),
                     ),

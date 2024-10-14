@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Sign in with email and password
   Future<User?> signIn(String email, String password) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
@@ -30,7 +29,6 @@ class AuthService {
     }
   }
 
-  // Sign out
   Future signOut() async {
     try {
       return await _auth.signOut();

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:evBookingOperators/screens/login_screen.dart';
@@ -11,95 +12,51 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  final String serverKey = "";
   User? _user;
   List<Map<String, dynamic>> _requests = [];
   final List<Map<String, dynamic>> _approvedLogs = [];
   List<bool> _approvedStatus = [];
   int _approvalCount = 0;
   int _cancellationCount = 0;
-  final DatabaseService _databaseService = DatabaseService();
 
   @override
   void initState() {
     super.initState();
     _user = FirebaseAuth.instance.currentUser;
+    _fetchRequestsFromFirestore();
+  }
 
-    _requests = [
-      {
-        'mailId': 'exa@mail.com',
-        'regNo': 'ABC1234',
-        'from': 'Campus A',
-        'to': 'Campus B',
-        'designation': 'Student',
-        'luggageStatus': 'Yes',
-        'specification': '',
-      },
-      {
-        'mailId': 'ple@mail.com',
-        'regNo': 'ABC1234',
-        'from': 'Campus A',
-        'to': 'Campus B',
-        'designation': 'Student',
-        'luggageStatus': 'Yes',
-        'specification': '',
-      },
-      {
-        'mailId': 'codeTrenchers@mail.com',
-        'regNo': 'ABC1234',
-        'from': 'Campus A',
-        'to': 'Campus B',
-        'designation': 'Student',
-        'luggageStatus': 'Yes',
-        'specification': '',
-      },
+  Future<void> _fetchRequestsFromFirestore() async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('status', isEqualTo: 'pending')
+          .get();
 
-      try {
-        await _databaseService.createBooking(
-          _user!.uid,
-          _user!.displayName ?? 'Unknown',
-          _user!.email ?? 'Unknown',
-          _selectedLocation ?? 'Unknown',
-          _selectedDestination ?? 'Unknown',
-          _selectedDesignation ?? 'Unknown',
-          _selectedLuggageStatus ?? 'Unknown',
-          purpose,
-        );
-        // Show success message
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Request submitted successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+      setState(() {
+        _requests = snapshot.docs.map((doc) {
+          Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+          return {
+            'docId': doc.id,
+            'createdAt': data['createdAt'],
+            'currentLocation': data['currentLocation'],
+            'designation': data['designation'],
+            'destination': data['destination'],
+            'luggage': data['luggage'],
+            'purpose': data['purpose'],
+            'status': data['status'],
+            'uEmail': data['uEmail'],
+            'uId': data['uId'],
+            'uName': data['uName'],
+          };
+        }).toList();
 
-        setState(() {
-          _selectedDesignation = null;
-          _selectedLuggageStatus = null;
-          _selectedPurpose = null;
-          _selectedLocation = null;
-          _otherPurposeText = null;
-          _selectedDestination = null;
-        });
-      } catch (e) {
-        if (!mounted) return;
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to submit request: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } else {
-    // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to submit request: User not logged in'),
-          backgroundColor: Colors.red,
-        ),
-      );
+        _approvedStatus = List<bool>.filled(_requests.length,
+            false); // Initialize approval status for the requests
+      });
+    } catch (e) {
+      print('Error fetching requests: $e');
+      // Handle errors, like showing an error message or retrying
     }
   }
 
@@ -112,7 +69,7 @@ class HomeScreenState extends State<HomeScreen> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (Route<dynamic> route) => false,
+          (Route<dynamic> route) => false,
     );
   }
 
@@ -126,26 +83,39 @@ class HomeScreenState extends State<HomeScreen> {
           content: SingleChildScrollView(
             child: ListBody(
               children: [
-                Text('Mail ID: ${request['mailId']}'),
-                Text('Reg No: ${request['regNo']}'),
-                Text('From: ${request['from']}'),
-                Text('To: ${request['to']}'),
+                Text('Name: ${request['uName']}'),
+                Text('Email: ${request['uEmail']}'),
                 Text('Designation: ${request['designation']}'),
-                Text('Luggage Status: ${request['luggageStatus']}'),
-                Text('Specification: ${request['specification']}'),
+                Text('Current Location: ${request['currentLocation']}'),
+                Text('Destination: ${request['destination']}'),
+                Text('Luggage: ${request['luggage']}'),
+                Text('Purpose: ${request['purpose']}'),
+                Text('Status: ${request['status']}'),
+                Text('Created At: ${request['createdAt'].toDate()}'),
               ],
             ),
           ),
           actions: [
             TextButton(
               child: const Text('Approve'),
-              onPressed: () {
-                setState(() {
-                  _approvedLogs.insert(0,request);
-                  _approvalCount++;
-                  _approvedStatus[index] = true; // Mark as approved
-                });
-                Navigator.of(context).pop();
+              onPressed: () async {
+                try {
+                  // Update Firestore document status to 'approved'
+                  await FirebaseFirestore.instance
+                      .collection('bookings')
+                      .doc(request['docId'])
+                      .update({'status': 'approved'});
+
+                  setState(() {
+                    _approvedLogs.insert(0, request);
+                    _approvalCount++;
+                    _approvedStatus[index] = true; // Mark as approved
+                  });
+
+                  Navigator.of(context).pop();
+                } catch (e) {
+                  print('Error updating status: $e');
+                }
               },
             ),
             TextButton(
@@ -178,11 +148,13 @@ class HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 10),
               ..._approvedLogs.take(2).map((log) {
                 return ListTile(
-                  title: Text('Approved: ${log['mailId']}'),
-                  subtitle: Text('From: ${log['from']} To: ${log['to']}'),
+                  title: Text('Approved: ${log['uEmail']}'),
+                  subtitle: Text(
+                      'From: ${log['currentLocation']} To: ${log['destination']}'),
                 );
               }),
-              if (_approvedLogs.length > 2) // Show a message if there are more than two
+              if (_approvedLogs.length >
+                  2) // Show a message if there are more than two
                 Text('And ${_approvedLogs.length - 2} more...'),
             ],
           ),
@@ -213,7 +185,7 @@ class HomeScreenState extends State<HomeScreen> {
             UserAccountsDrawerHeader(
               decoration: const BoxDecoration(
                 gradient:
-                    LinearGradient(colors: [Colors.deepPurple, Colors.purple]),
+                LinearGradient(colors: [Colors.deepPurple, Colors.purple]),
               ),
               accountName: Text(_user?.displayName ?? ''),
               accountEmail: Text(_user?.email ?? ''),
@@ -224,9 +196,9 @@ class HomeScreenState extends State<HomeScreen> {
                     : null,
                 child: _user?.photoURL == null
                     ? Text(
-                        _user?.displayName?.substring(0, 1) ?? 'G',
-                        style: const TextStyle(fontSize: 40.0),
-                      )
+                  _user?.displayName?.substring(0, 1) ?? 'G',
+                  style: const TextStyle(fontSize: 40.0),
+                )
                     : null,
               ),
             ),
@@ -468,7 +440,8 @@ class HomeScreenState extends State<HomeScreen> {
                     return const SizedBox.shrink(); // Skip approved requests
                   }
                   return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
                     padding: const EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -486,7 +459,8 @@ class HomeScreenState extends State<HomeScreen> {
                       children: [
                         Expanded( // Use Expanded here
                           child: Text(
-                            '${index + 1}. Request from: ${_requests[index]['mailId']}',
+                            '${index +
+                                1}. Request from: ${_requests[index]['uName']}',
                             style: const TextStyle(fontSize: 18.0),
                             overflow: TextOverflow.ellipsis, // Prevent overflow
                             maxLines: 1, // Limit to one line
@@ -504,6 +478,12 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _fetchRequestsFromFirestore,
+        backgroundColor: Colors.deepPurple,
+        // Call the fetch method to reload data
+        child: const Icon(Icons.refresh),
       ),
     );
   }
