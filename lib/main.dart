@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:login_page/screens/home_screen.dart';
-import 'package:login_page/screens/login_screen.dart';
-import 'package:login_page/services/auth_service.dart';
+import 'package:evBookingOperators/screens/home_screen.dart';
+import 'package:evBookingOperators/screens/login_screen.dart';
+import 'package:evBookingOperators/services/auth_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 

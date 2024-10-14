@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:login_page/screens/login_screen.dart';
-import 'package:login_page/services/database_service.dart';
+import 'package:evBookingOperators/screens/login_screen.dart';
+import 'package:evBookingOperators/services/database_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,16 +20,39 @@ class HomeScreenState extends State<HomeScreen> {
   int _cancellationCount = 0;
   final DatabaseService _databaseService = DatabaseService();
 
-
-
   @override
   void initState() {
     super.initState();
     _user = FirebaseAuth.instance.currentUser;
 
-  void _submitDetails() async {
-    if (_user != null) {
-      String purpose = _selectedPurpose == 'Other' ? _otherPurposeText ?? 'Unknown' : _selectedPurpose ?? 'Unknown';
+    _requests = [
+      {
+        'mailId': 'exa@mail.com',
+        'regNo': 'ABC1234',
+        'from': 'Campus A',
+        'to': 'Campus B',
+        'designation': 'Student',
+        'luggageStatus': 'Yes',
+        'specification': '',
+      },
+      {
+        'mailId': 'ple@mail.com',
+        'regNo': 'ABC1234',
+        'from': 'Campus A',
+        'to': 'Campus B',
+        'designation': 'Student',
+        'luggageStatus': 'Yes',
+        'specification': '',
+      },
+      {
+        'mailId': 'codeTrenchers@mail.com',
+        'regNo': 'ABC1234',
+        'from': 'Campus A',
+        'to': 'Campus B',
+        'designation': 'Student',
+        'luggageStatus': 'Yes',
+        'specification': '',
+      },
 
       try {
         await _databaseService.createBooking(
