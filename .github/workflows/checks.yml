@@ -1,0 +1,47 @@
+name: Flutter Checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+    paths: |
+      '**/*.dart'
+
+jobs:
+  flutter-check:
+    name: Flutter Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+    
+      - name: Cache Flutter and Dart dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ~/.flutter
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Dart Lints
+        run: dart format --output=none . --set-exit-if-changed
+      
+      - name: Install Firebase-cli
+        run: curl -sL https://firebase.tools | bash
+
+      - name: Install Flutterfire-cli
+        run: flutter pub global activate flutterfire_cli 1.0.1-dev.4
+      
+      - name: Configure Flutterfire
+        run: flutterfire configure --token ${{ secrets.FIREBASE_TOKEN }} -f -p authentication-699e4 -y --platforms android -a com.codeTrenchers.evBookingOperators
+
+      - name: Flutter Analyze
+        run: flutter analyze
