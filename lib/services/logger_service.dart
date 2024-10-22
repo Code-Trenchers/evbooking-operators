@@ -3,17 +3,16 @@ import 'package:logger/logger.dart';
 class LoggerService {
   static final Logger _logger = Logger(
     printer: PrettyPrinter(
-      methodCount: 2,
-      errorMethodCount: 8,
-      lineLength: 120,
-      colors: true,
-      printEmojis: true,
-      dateTimeFormat: DateTimeFormat.dateAndTime
-    ),
+        methodCount: 2,
+        errorMethodCount: 8,
+        lineLength: 120,
+        colors: true,
+        printEmojis: true,
+        dateTimeFormat: DateTimeFormat.dateAndTime),
   );
 
-  static void verbose(dynamic message) {
-    _logger.v(message);
+  static void trace(dynamic message) {
+    _logger.t(message);
   }
 
   static void debug(dynamic message) {

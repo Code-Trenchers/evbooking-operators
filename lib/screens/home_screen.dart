@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:evBookingOperators/screens/login_screen.dart';
-import 'package:evBookingOperators/services/logger_service.dart';
+import 'package:evbooking_operators/screens/login_screen.dart';
+import 'package:evbooking_operators/services/logger_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -83,7 +83,7 @@ class HomeScreenState extends State<HomeScreen> {
     Map<String, dynamic> request = _requests[index];
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('E-Vehicle Request Details'),
           content: SingleChildScrollView(
@@ -104,40 +104,54 @@ class HomeScreenState extends State<HomeScreen> {
           actions: [
             TextButton(
               child: const Text('Approve'),
-              onPressed: () async {
-                try {
-                  // Update Firestore document status to 'approved'
-                  await FirebaseFirestore.instance
-                      .collection('bookings')
-                      .doc(request['docId'])
-                      .update({'status': 'approved'});
-
-                  setState(() {
-                    _approvedLogs.insert(0, request);
-                    _approvalCount++;
-                    _approvedStatus[index] = true; // Mark as approved
-                  });
-
-                  Navigator.of(context).pop();
-                } catch (e) {
-                  print('Error updating status: $e');
-                }
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _approveRequest(index, request);
               },
             ),
             TextButton(
               child: const Text('Cancel'),
               onPressed: () {
-                setState(() {
-                  _cancellationCount++;
-                  _approvedStatus[index] = true; // Mark as unapproved
-                });
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
+                _cancelRequest(index);
               },
             ),
           ],
         );
       },
     );
+  }
+
+  Future<void> _approveRequest(int index, Map<String, dynamic> request) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(request['docId'])
+          .update({'status': 'approved'});
+
+      setState(() {
+        _approvedLogs.insert(0, request);
+        _approvalCount++;
+        _approvedStatus[index] = true;
+      });
+
+      LoggerService.info('Request approved successfully');
+    } catch (e) {
+      LoggerService.error('Error updating status', e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error approving request: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  void _cancelRequest(int index) {
+    setState(() {
+      _cancellationCount++;
+      _approvedStatus[index] = true;
+    });
+    LoggerService.info('Request cancelled');
   }
 
   void _showEvLogs() {

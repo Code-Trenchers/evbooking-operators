@@ -1,4 +1,4 @@
-import 'package:evBookingOperators/services/logger_service.dart';
+import 'package:evbooking_operators/services/logger_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
