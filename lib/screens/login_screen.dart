@@ -7,6 +7,7 @@ import 'package:evBookingOperators/widgets/button_widget.dart';
 import 'package:evBookingOperators/widgets/error_widget.dart';
 import 'package:evBookingOperators/widgets/text_field_widget.dart';
 import 'package:evBookingOperators/widgets/square_tile_widget.dart';
+import 'package:evBookingOperators/services/logger_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,11 +33,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> gmailLogin() async {
     _showLoadingIndicator();
+    LoggerService.info('Attempting Gmail login');
 
     try {
       await _googleSignIn.signOut();
       final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return;
+      if (googleUser == null) {
+        LoggerService.info('Google sign-in cancelled by user');
+        return;
+      }
 
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
@@ -50,8 +55,10 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pop(context);
 
       if (user != null && user.email!.endsWith('@bitsathy.ac.in')) {
+        LoggerService.info('User logged in successfully: ${user.email}');
         _navigateToHomePage();
       } else {
+        LoggerService.warning('Login attempt with non-Bitsathy email');
         await _authService.signOut();
         await _googleSignIn.signOut();
         if (!mounted) return;
@@ -60,6 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     } on FirebaseAuthException catch (e) {
+      LoggerService.error('Firebase Auth Exception during Gmail login', e);
       Navigator.pop(context);
       setState(() {
         _errorMessage = e.code;
@@ -69,6 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void signUserIn() async {
     _showLoadingIndicator();
+    LoggerService.info('Attempting user sign in');
 
     try {
       final String email = _emailController.text;
@@ -78,8 +87,14 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       Navigator.pop(context);
-      if (user != null) _navigateToHomePage();
+      if (user != null) {
+        LoggerService.info('User signed in successfully: ${user.email}');
+        _navigateToHomePage();
+      } else {
+        LoggerService.warning('Sign in failed: No user returned');
+      }
     } on FirebaseAuthException catch (e) {
+      LoggerService.error('Firebase Auth Exception during sign in', e);
       Navigator.pop(context);
       setState(() {
         _errorMessage = e.code;

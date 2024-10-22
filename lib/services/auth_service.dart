@@ -1,42 +1,41 @@
+import 'package:evBookingOperators/services/logger_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<User?> signIn(String email, String password) async {
     try {
+      LoggerService.info('Attempting to sign in user with email: $email');
       UserCredential result = await _auth.signInWithEmailAndPassword(
           email: email, password: password);
+      LoggerService.info('User signed in successfully: ${result.user?.uid}');
       return result.user;
     } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
-      }
+      LoggerService.error('Error signing in', e);
       return null;
     }
   }
 
   Future<User?> signInWithCredential(AuthCredential credential) async {
     try {
+      LoggerService.info('Attempting to sign in with credential');
       UserCredential result = await _auth.signInWithCredential(credential);
+      LoggerService.info('User signed in successfully: ${result.user?.uid}');
       return result.user;
     } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
-      }
+      LoggerService.error('Error signing in with credential', e);
       return null;
     }
   }
 
-  Future signOut() async {
+  Future<void> signOut() async {
     try {
-      return await _auth.signOut();
+      LoggerService.info('Attempting to sign out user');
+      await _auth.signOut();
+      LoggerService.info('User signed out successfully');
     } catch (e) {
-      if (kDebugMode) {
-        print(e.toString());
-      }
-      return null;
+      LoggerService.error('Error signing out', e);
     }
   }
 

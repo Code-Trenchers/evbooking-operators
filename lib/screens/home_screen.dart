@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:evBookingOperators/screens/login_screen.dart';
+import 'package:evBookingOperators/services/logger_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,6 +28,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchRequestsFromFirestore() async {
     try {
+      LoggerService.info('Fetching pending requests from Firestore');
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('bookings')
           .where('status', isEqualTo: 'pending')
@@ -50,25 +52,31 @@ class HomeScreenState extends State<HomeScreen> {
           };
         }).toList();
 
-        _approvedStatus = List<bool>.filled(_requests.length,
-            false); // Initialize approval status for the requests
+        _approvedStatus = List<bool>.filled(_requests.length, false);
       });
+      LoggerService.info('Fetched ${_requests.length} pending requests');
     } catch (e) {
-      print('Error fetching requests: $e');
+      LoggerService.error('Error fetching requests', e);
       // Handle errors, like showing an error message or retrying
     }
   }
 
   Future<void> signUserOut() async {
-    await FirebaseAuth.instance.signOut();
+    try {
+      LoggerService.info('Signing out user');
+      await FirebaseAuth.instance.signOut();
+      LoggerService.info('User signed out successfully');
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (Route<dynamic> route) => false,
-    );
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (Route<dynamic> route) => false,
+      );
+    } catch (e) {
+      LoggerService.error('Error signing out user', e);
+    }
   }
 
   void _showDetailsDialog(int index) {
