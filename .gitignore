@@ -9,6 +9,9 @@
 .history
 .svn/
 migrate_working_dir/
+**/google-services.json
+**/firebase_options.dart
+firebase.json
 
 # IntelliJ related
 *.iml
@@ -16,7 +19,6 @@ migrate_working_dir/
 *.iws
 .idea/
 .vscode/
-
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.
@@ -40,6 +42,6 @@ app.*.map.json
 
 # Android Studio will place build artifacts here
 /android/app/debug
-/android/app/build
 /android/app/profile
 /android/app/release
+/android/app/build
