@@ -113,13 +113,11 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 50),
-
                 const Icon(
                   Icons.lock,
                   size: 100,
                 ),
                 const SizedBox(height: 50),
-
                 Text(
                   'Welcome back you\'ve been missed!',
                   style: TextStyle(
@@ -127,17 +125,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontSize: 16,
                   ),
                 ),
-
                 const SizedBox(height: 25),
-
                 MyTextField(
                   controller: _emailController,
                   hintText: 'Email',
                   obscureText: false,
                 ),
-
                 const SizedBox(height: 10),
-
                 MyTextField(
                   controller: _passwordController,
                   hintText: 'Password',
@@ -153,9 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Row(
@@ -168,21 +160,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 25),
-
                 MyButton(
                   onTap: signUserIn,
                 ),
-
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 20),
-                  buildErrorMessage(
-                      _errorMessage!),
+                  buildErrorMessage(_errorMessage!),
                 ],
-
                 const SizedBox(height: 50),
-
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Row(
@@ -209,15 +195,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 50),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     GestureDetector(
-                      onTap:
-                          gmailLogin,
+                      onTap: gmailLogin,
                       child:
                           const SquareTile(imagePath: 'lib/images/google.png'),
                     ),
