@@ -141,9 +141,10 @@ class HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   TextButton(
-                    child: const Text('Cancel'),
+                    child: const Text('Reject'),
                     onPressed: () {
                       Navigator.of(context).pop();
+                      _rejectRequest(index);
                     },
                   ),
                 ],
@@ -317,10 +318,10 @@ class HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 TextButton(
-                  child: const Text('Cancel'),
+                  child: const Text('Reject'),
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
-                    _cancelRequest(index);
+                    _rejectRequest(index);
                   },
                 ),
               ],
@@ -367,12 +368,36 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _cancelRequest(int index) {
-    setState(() {
-      _cancellationCount++;
-      _approvedStatus[index] = true;
-    });
-    LoggerService.info('Request cancelled');
+  Future<void> _rejectRequest(int index) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(_requests[index]['docId'])
+          .update({
+        'status': 'rejected',
+      });
+
+      setState(() {
+        _cancellationCount++;
+        _approvedStatus[index] = true;
+        _requests.removeAt(index);
+      });
+
+      LoggerServe.info('Request denied');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Request denied')),
+        );
+      }
+    } catch (e) {
+      LoggerService.error('Error rejecting request', e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error rejecting request: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   void _showEvLogs() {
