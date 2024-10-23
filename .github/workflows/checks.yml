@@ -35,7 +35,9 @@ jobs:
         run: dart format --output=none . --set-exit-if-changed
       
       - name: Install Firebase-cli
-        run: curl -sL https://firebase.tools | bash
+        run: |
+         sudo curl -o "/usr/local/bin/firebase" -L --progress-bar https://firebase.tools/bin/linux/v13.22.1
+         sudo chmod +rx /usr/local/bin/firebase
 
       - name: Install Flutterfire-cli
         run: flutter pub global activate flutterfire_cli 1.0.1-dev.4
