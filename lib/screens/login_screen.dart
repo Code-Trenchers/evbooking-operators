@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:evbooking_operators/screens/home_screen.dart';
+import 'package:evbooking_operators/widgets/error_widget.dart';
 import 'package:evbooking_operators/services/auth_service.dart';
 import 'package:evbooking_operators/widgets/button_widget.dart';
-import 'package:evbooking_operators/widgets/error_widget.dart';
+import 'package:evbooking_operators/services/logger_service.dart';
 import 'package:evbooking_operators/widgets/text_field_widget.dart';
 import 'package:evbooking_operators/widgets/square_tile_widget.dart';
-import 'package:evbooking_operators/services/logger_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

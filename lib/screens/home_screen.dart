@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:evbooking_operators/screens/login_screen.dart';
 import 'package:evbooking_operators/services/logger_service.dart';
 
@@ -57,7 +57,6 @@ class HomeScreenState extends State<HomeScreen> {
       LoggerService.info('Fetched ${_requests.length} pending requests');
     } catch (e) {
       LoggerService.error('Error fetching requests', e);
-      // Handle errors, like showing an error message or retrying
     }
   }
 
@@ -81,53 +80,106 @@ class HomeScreenState extends State<HomeScreen> {
 
   void _showDetailsDialog(int index) {
     Map<String, dynamic> request = _requests[index];
+    String? selectedVehicle;
+    List<String> vehicleNumbers = [
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '10',
+      '11',
+      '12',
+      '13',
+      '14',
+      '15'
+    ];
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('E-Vehicle Request Details'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: [
-                Text('Name: ${request['uName']}'),
-                Text('Email: ${request['uEmail']}'),
-                Text('Designation: ${request['designation']}'),
-                Text('Current Location: ${request['currentLocation']}'),
-                Text('Destination: ${request['destination']}'),
-                Text('Luggage: ${request['luggage']}'),
-                Text('Purpose: ${request['purpose']}'),
-                Text('Status: ${request['status']}'),
-                Text('Created At: ${request['createdAt'].toDate()}'),
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('E-Vehicle Request Details'),
+              content: SingleChildScrollView(
+                child: ListBody(
+                  children: [
+                    Text('Name: ${request['uName']}'),
+                    Text('Email: ${request['uEmail']}'),
+                    Text('Designation: ${request['designation']}'),
+                    Text('Current Location: ${request['currentLocation']}'),
+                    Text('Destination: ${request['destination']}'),
+                    Text('Luggage: ${request['luggage']}'),
+                    Text('Purpose: ${request['purpose']}'),
+                    Text('Status: ${request['status']}'),
+                    Text('Created At: ${request['createdAt'].toDate()}'),
+                    const SizedBox(height: 10),
+                    const Text('Select Vehicle Number:'),
+                    DropdownButton<String>(
+                      value: selectedVehicle,
+                      hint: const Text('Select Vehicle'),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedVehicle = newValue;
+                        });
+                      },
+                      items: vehicleNumbers.map<DropdownMenuItem<String>>(
+                        (String vehicle) {
+                          return DropdownMenuItem<String>(
+                            value: vehicle,
+                            child: Text(vehicle),
+                          );
+                        },
+                      ).toList(),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Approve'),
+                  onPressed: () {
+                    if (selectedVehicle != null) {
+                      Navigator.of(dialogContext).pop();
+                      _approveRequest(index, request, selectedVehicle!);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please select a vehicle number'),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    _cancelRequest(index);
+                  },
+                ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Approve'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _approveRequest(index, request);
-              },
-            ),
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _cancelRequest(index);
-              },
-            ),
-          ],
+            );
+          },
         );
       },
     );
   }
 
-  Future<void> _approveRequest(int index, Map<String, dynamic> request) async {
+  Future<void> _approveRequest(
+      int index, Map<String, dynamic> request, String vehicleNumber) async {
     try {
       await FirebaseFirestore.instance
           .collection('bookings')
           .doc(request['docId'])
-          .update({'status': 'approved'});
+          .update({
+        'status': 'approved',
+        'vehicleNumber': vehicleNumber,
+      });
 
       setState(() {
         _approvedLogs.insert(0, request);
@@ -135,7 +187,7 @@ class HomeScreenState extends State<HomeScreen> {
         _approvedStatus[index] = true;
       });
 
-      LoggerService.info('Request approved successfully');
+      LoggerService.info('Request approved with vehicle $vehicleNumber');
     } catch (e) {
       LoggerService.error('Error updating status', e);
       if (mounted) {
@@ -173,8 +225,7 @@ class HomeScreenState extends State<HomeScreen> {
                       'From: ${log['currentLocation']} To: ${log['destination']}'),
                 );
               }),
-              if (_approvedLogs.length >
-                  2) // Show a message if there are more than two
+              if (_approvedLogs.length > 2)
                 Text('And ${_approvedLogs.length - 2} more...'),
             ],
           ),
@@ -253,16 +304,16 @@ class HomeScreenState extends State<HomeScreen> {
           children: <Widget>[
             // Top bar with rounded corners
             Container(
-              margin: const EdgeInsets.all(16.0), // Margin around the bar
-              padding: const EdgeInsets.all(16.0), // Padding inside the bar
+              margin: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20.0), // Rounded corners
+                borderRadius: BorderRadius.circular(20.0),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black26,
                     blurRadius: 8.0,
-                    offset: Offset(0, 4), // Shadow position
+                    offset: Offset(0, 4),
                   ),
                 ],
               ),
@@ -280,7 +331,7 @@ class HomeScreenState extends State<HomeScreen> {
                 itemCount: _requests.length,
                 itemBuilder: (context, index) {
                   if (_approvedStatus[index]) {
-                    return const SizedBox.shrink(); // Skip approved requests
+                    return const SizedBox.shrink();
                   }
                   return Container(
                     margin: const EdgeInsets.symmetric(
@@ -301,11 +352,10 @@ class HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          // Use Expanded here
                           child: Text(
                             '${index + 1}. Request from: ${_requests[index]['uName']}',
                             style: const TextStyle(fontSize: 18.0),
-                            overflow: TextOverflow.ellipsis, // Prevent overflow
+                            overflow: TextOverflow.ellipsis,
                             maxLines: 1, // Limit to one line
                           ),
                         ),
@@ -322,10 +372,10 @@ class HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+      // Reload button
       floatingActionButton: FloatingActionButton(
         onPressed: _fetchRequestsFromFirestore,
         backgroundColor: Colors.deepPurple,
-        // Call the fetch method to reload data
         child: const Icon(Icons.refresh),
       ),
     );
