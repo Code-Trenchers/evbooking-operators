@@ -81,23 +81,79 @@ class HomeScreenState extends State<HomeScreen> {
   void _showDetailsDialog(int index) {
     Map<String, dynamic> request = _requests[index];
     String? selectedVehicle;
-    List<String> vehicleNumbers = [
-      '1',
-      '2',
-      '3',
-      '4',
-      '5',
-      '6',
-      '7',
-      '8',
-      '9',
-      '10',
-      '11',
-      '12',
-      '13',
-      '14',
-      '15'
-    ];
+    void showVehicleSelectionDialog(int index, Map<String, dynamic> request) {
+      List<String> vehicleNumbers = [
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+        '10',
+        '11',
+        '12',
+        '13',
+        '14',
+        '15'
+      ];
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return AlertDialog(
+                title: const Text('Select Vehicle'),
+                content: DropdownButton<String>(
+                  value: selectedVehicle,
+                  hint: const Text('Choose a vehicle'),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      selectedVehicle = newValue;
+                    });
+                  },
+                  items: vehicleNumbers.map<DropdownMenuItem<String>>(
+                    (String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    },
+                  ).toList(),
+                ),
+                actions: [
+                  TextButton(
+                    child: const Text('Confirm'),
+                    onPressed: () {
+                      if (selectedVehicle != null) {
+                        Navigator.of(context).pop();
+                        _approveRequest(index, request, selectedVehicle!);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please select a vehicle number'),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  TextButton(
+                    child: const Text('Cancel'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -106,36 +162,149 @@ class HomeScreenState extends State<HomeScreen> {
             return AlertDialog(
               title: const Text('E-Vehicle Request Details'),
               content: SingleChildScrollView(
-                child: ListBody(
+                child: Table(
+                  border: TableBorder.all(),
                   children: [
-                    Text('Name: ${request['uName']}'),
-                    Text('Email: ${request['uEmail']}'),
-                    Text('Designation: ${request['designation']}'),
-                    Text('Current Location: ${request['currentLocation']}'),
-                    Text('Destination: ${request['destination']}'),
-                    Text('Luggage: ${request['luggage']}'),
-                    Text('Purpose: ${request['purpose']}'),
-                    Text('Status: ${request['status']}'),
-                    Text('Created At: ${request['createdAt'].toDate()}'),
-                    const SizedBox(height: 10),
-                    const Text('Select Vehicle Number:'),
-                    DropdownButton<String>(
-                      value: selectedVehicle,
-                      hint: const Text('Select Vehicle'),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedVehicle = newValue;
-                        });
-                      },
-                      items: vehicleNumbers.map<DropdownMenuItem<String>>(
-                        (String vehicle) {
-                          return DropdownMenuItem<String>(
-                            value: vehicle,
-                            child: Text(vehicle),
-                          );
-                        },
-                      ).toList(),
-                    ),
+                    TableRow(children: [
+                      const TableCell(
+                          child: Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Field',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      )),
+                      const TableCell(
+                          child: Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Value',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      )),
+                    ]),
+                    TableRow(children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Name'),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          request['uName'],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
+                    TableRow(children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Email'),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          request['uEmail'],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
+                    TableRow(children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Designation'),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          request['designation'],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
+                    TableRow(children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Current Location'),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          request['currentLocation'],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
+                    TableRow(children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Destination'),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          request['destination'],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
+                    TableRow(children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Luggage'),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          request['luggage'],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
+                    TableRow(children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Purpose'),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          request['purpose'],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
+                    TableRow(children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Status'),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          request['status'],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
+                    TableRow(children: [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('Created At'),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          request['createdAt'].toDate().toString(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
                   ],
                 ),
               ),
@@ -143,16 +312,8 @@ class HomeScreenState extends State<HomeScreen> {
                 TextButton(
                   child: const Text('Approve'),
                   onPressed: () {
-                    if (selectedVehicle != null) {
-                      Navigator.of(dialogContext).pop();
-                      _approveRequest(index, request, selectedVehicle!);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please select a vehicle number'),
-                        ),
-                      );
-                    }
+                    Navigator.of(dialogContext).pop();
+                    showVehicleSelectionDialog(index, request);
                   },
                 ),
                 TextButton(
@@ -182,12 +343,20 @@ class HomeScreenState extends State<HomeScreen> {
       });
 
       setState(() {
-        _approvedLogs.insert(0, request);
+        _approvedLogs.insert(0, {...request, 'vehicleNumber': vehicleNumber});
         _approvalCount++;
         _approvedStatus[index] = true;
+        _requests.removeAt(index);
       });
 
       LoggerService.info('Request approved with vehicle $vehicleNumber');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Request approved with vehicle $vehicleNumber')),
+        );
+      }
     } catch (e) {
       LoggerService.error('Error updating status', e);
       if (mounted) {
