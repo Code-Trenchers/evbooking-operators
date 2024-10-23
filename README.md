@@ -1,16 +1,26 @@
-# EV Booking Operators
+# EV Booking Operator
 
-A new Flutter project.
+EV Booking Operator is a flutter project designed to manage EV vehicle requests and track them without hassle.
 
-## Getting Started
+> [!NOTE]
+> The project is still in active development, so there may be some bugs or incomplete features. Contributions and feedback are welcome!
 
-This project is a starting point for a Flutter application.
+> [!WARNING]
+> Make sure you have [FlutterSDK](https://flutter.dev/) and required Android Tools installed before running the project.
 
-A few resources to get you started if this is your first Flutter project:
+> [!TIP]
+> For help getting started with Flutter development, view the
+> [online documentation](https://docs.flutter.dev/), which offers tutorials,
+> samples, guidance on mobile development, and a full API reference.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 🐞 Issues and Feedback
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The project is in active development, you may encounter issues or bugs. If so, please help us improve by submitting feedback via the [GitHub Issues page](https://github.com/Code-Trenchers/evbooking-operators/issues).
+
+## 🛠 Contributing
+
+Contributions are welcome! Feel free to submit pull requests to add features or resolve issues.
+
+## 📧 Contact
+
+For more information, reach out to the organization members on GitHub: [Code Trenchers](https://github.com/orgs/Code-Trenchers/people)
