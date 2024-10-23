@@ -34,10 +34,15 @@ jobs:
       - name: Dart Lints
         run: dart format --output=none . --set-exit-if-changed
       
+      - name: Install node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
       - name: Install Firebase-cli
-        run: |
-         sudo curl -o "/usr/local/bin/firebase" -L --progress-bar https://firebase.tools/bin/linux/v13.22.1
-         sudo chmod +rx /usr/local/bin/firebase
+        uses: w9jds/setup-firebase@main
+        with:
+          firebase_token: ${{ secrets.FIREBASE_TOKEN }}
 
       - name: Install Flutterfire-cli
         run: flutter pub global activate flutterfire_cli 1.0.1-dev.4
