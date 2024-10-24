@@ -40,9 +40,7 @@ jobs:
           node-version: 18
 
       - name: Install Firebase-cli
-        uses: w9jds/setup-firebase@main
-        with:
-          firebase_token: ${{ secrets.FIREBASE_TOKEN }}
+        run: sudo npm install -g firebase-tools
 
       - name: Install Flutterfire-cli
         run: flutter pub global activate flutterfire_cli 1.0.1-dev.4
