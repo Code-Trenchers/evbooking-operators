@@ -1,0 +1,26 @@
+name: Flutter Checks
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - '**/*.dart'
+
+jobs:
+  flutter-check:
+    name: Flutter Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Flutter Environment
+        uses: ./.github/actions/flutter-setup
+        with:
+          firebase-options: ${{ secrets.FIREBASE_OPTIONS }}
+      
+      - name: Dart Format Check
+        run: dart format --output=none . --set-exit-if-changed
+      
+      - name: Flutter Analyze
+        run: flutter analyze
