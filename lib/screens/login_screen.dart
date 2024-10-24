@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:evbooking_operators/screens/home_screen.dart';
 import 'package:evbooking_operators/widgets/error_widget.dart';
 import 'package:evbooking_operators/services/auth_service.dart';
@@ -20,7 +19,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
   bool _obscureText = true;
   String? _errorMessage;
 
@@ -33,26 +31,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> gmailLogin() async {
     _showLoadingIndicator();
-    LoggerService.info('Attempting Gmail login');
-
     try {
-      await _googleSignIn.signOut();
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        LoggerService.info('Google sign-in cancelled by user');
-        return;
+      await _authService.signOut();
+      User? user = await _authService.gmailLogin();
+
+      if (mounted) {
+        Navigator.pop(context);
       }
-
-      final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final User? user = await _authService.signInWithCredential(credential);
-
-      if (!mounted) return;
-      Navigator.pop(context);
 
       if (user != null && user.email!.endsWith('@bitsathy.ac.in')) {
         LoggerService.info('User logged in successfully: ${user.email}');
@@ -60,50 +45,54 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         LoggerService.warning('Login attempt with non-Bitsathy email');
         await _authService.signOut();
-        await _googleSignIn.signOut();
-        if (!mounted) return;
-        setState(() {
-          _errorMessage = 'Sign in restricted to Bitsathy domain';
-        });
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Sign in restricted to Bitsathy domain';
+          });
+        }
       }
     } on FirebaseAuthException catch (e) {
       LoggerService.error('Firebase Auth Exception during Gmail login', e);
-      Navigator.pop(context);
-      setState(() {
-        _errorMessage = e.code;
-      });
+      if (mounted) {
+        Navigator.pop(context);
+        setState(() {
+          _errorMessage = e.code;
+        });
+      }
     }
   }
 
+  // Email sign in disabled for now !!
   void signUserIn() async {
-    _showLoadingIndicator();
-    LoggerService.info('Attempting user sign in');
+    return;
+    // _showLoadingIndicator();
+    // LoggerService.info('Attempting user sign in');
 
-    try {
-      final String email = _emailController.text;
-      final String password = _passwordController.text;
-      final User? user = await _authService.signIn(email, password);
+    // try {
+    //   final String email = _emailController.text;
+    //   final String password = _passwordController.text;
+    //   final User? user = await _authService.signIn(email, password);
 
-      if (!mounted) return;
+    //   if (!mounted) return;
 
-      Navigator.pop(context);
-      if (user != null) {
-        LoggerService.info('User signed in successfully: ${user.email}');
-        _navigateToHomePage();
-      } else {
-        LoggerService.warning('Sign in failed: No user returned');
-      }
-    } on FirebaseAuthException catch (e) {
-      LoggerService.error('Firebase Auth Exception during sign in', e);
-      Navigator.pop(context);
-      setState(() {
-        _errorMessage = e.code;
-      });
-    }
+    //   Navigator.pop(context);
+    //   if (user != null) {
+    //     LoggerService.info('User signed in successfully: ${user.email}');
+    //     _navigateToHomePage();
+    //   } else {
+    //     LoggerService.warning('Sign in failed: No user returned');
+    //   }
+    // } on FirebaseAuthException catch (e) {
+    //   LoggerService.error('Firebase Auth Exception during sign in', e);
+    //   Navigator.pop(context);
+    //   setState(() {
+    //     _errorMessage = e.code;
+    //   });
+    // }
   }
 
   void _navigateToHomePage() {
-    _googleSignIn.signOut();
+    _authService.signOut();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const HomeScreen()),

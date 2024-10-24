@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:evbooking_operators/screens/login_screen.dart';
+import 'package:evbooking_operators/services/auth_service.dart';
 import 'package:evbooking_operators/services/logger_service.dart';
+import 'package:evbooking_operators/services/database_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +20,8 @@ class HomeScreenState extends State<HomeScreen> {
   List<bool> _approvedStatus = [];
   int _approvalCount = 0;
   int _cancellationCount = 0;
+  final DatabaseService _databaseService = DatabaseService();
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -29,52 +33,16 @@ class HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchRequestsFromFirestore() async {
     try {
       LoggerService.info('Fetching pending requests from Firestore');
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('bookings')
-          .where('status', isEqualTo: 'pending')
-          .get();
+      List<Map<String, dynamic>>? fetchedRequests =
+          await _databaseService.fetchBookings();
 
       setState(() {
-        _requests = snapshot.docs.map((doc) {
-          Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-          return {
-            'docId': doc.id,
-            'createdAt': data['createdAt'],
-            'currentLocation': data['currentLocation'],
-            'designation': data['designation'],
-            'destination': data['destination'],
-            'luggage': data['luggage'],
-            'purpose': data['purpose'],
-            'status': data['status'],
-            'uEmail': data['uEmail'],
-            'uId': data['uId'],
-            'uName': data['uName'],
-          };
-        }).toList();
-
+        _requests = fetchedRequests;
         _approvedStatus = List<bool>.filled(_requests.length, false);
       });
       LoggerService.info('Fetched ${_requests.length} pending requests');
     } catch (e) {
       LoggerService.error('Error fetching requests', e);
-    }
-  }
-
-  Future<void> signUserOut() async {
-    try {
-      LoggerService.info('Signing out user');
-      await FirebaseAuth.instance.signOut();
-      LoggerService.info('User signed out successfully');
-
-      if (!mounted) return;
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-        (Route<dynamic> route) => false,
-      );
-    } catch (e) {
-      LoggerService.error('Error signing out user', e);
     }
   }
 
@@ -466,8 +434,12 @@ class HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () {
-                Navigator.pop(context);
-                signUserOut();
+                _authService.signOut();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (Route<dynamic> route) => false,
+                );
               },
             ),
           ],
