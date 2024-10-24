@@ -20,7 +20,7 @@ jobs:
           firebase-options: ${{ secrets.FIREBASE_OPTIONS }}
       
       - name: Dart Format Check
-        run: dart format --output=none . --set-exit-if-changed
+        run: dart format --output=none $(find . -name "*.dart" ! -path "./lib/firebase_options.dart") --set-exit-if-changed
       
       - name: Flutter Analyze
         run: flutter analyze
