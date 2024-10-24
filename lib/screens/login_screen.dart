@@ -92,7 +92,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToHomePage() {
-    _authService.signOut();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const HomeScreen()),
