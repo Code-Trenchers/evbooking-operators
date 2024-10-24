@@ -16,8 +16,6 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   User? _user;
-  List<Map<String, dynamic>> _requests = [];
-  List<bool> _approvedStatus = [];
   final DatabaseService _databaseService = DatabaseService();
   final AuthService _authService = AuthService();
 
@@ -25,33 +23,13 @@ class HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _user = FirebaseAuth.instance.currentUser;
-    _fetchRequestsFromFirestore();
   }
 
-  Future<void> _fetchRequestsFromFirestore() async {
-    try {
-      LoggerService.info('Fetching pending requests from Firestore');
-      List<Map<String, dynamic>>? fetchedRequests =
-          await _databaseService.fetchBookingsByStatus('pending');
-
-      setState(() {
-        _requests = fetchedRequests;
-        _approvedStatus = List<bool>.filled(_requests.length, false);
-      });
-      LoggerService.info('Fetched ${_requests.length} pending requests');
-    } catch (e) {
-      LoggerService.error('Error fetching requests', e);
-    }
-  }
-
-  void _showDetailsDialog(int index) {
-    Map<String, dynamic> request = _requests[index];
+  void _showDetailsDialog(Map<String, dynamic> request) {
     String? selectedVehicle;
-    void showVehicleSelectionDialog(int index, Map<String, dynamic> request) {
-      List<String> vehicleNumbers = [];
-      for (var i = 1; i <= 15; i++) {
-        vehicleNumbers.add(i.toString());
-      }
+    void showVehicleSelectionDialog(Map<String, dynamic> request) {
+      List<String> vehicleNumbers =
+          List.generate(15, (i) => (i + 1).toString());
 
       showDialog(
         context: context,
@@ -83,7 +61,7 @@ class HomeScreenState extends State<HomeScreen> {
                     onPressed: () {
                       if (selectedVehicle != null) {
                         Navigator.of(context).pop();
-                        _approveRequest(index, request, selectedVehicle!);
+                        _approveRequest(request, selectedVehicle!);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -97,7 +75,7 @@ class HomeScreenState extends State<HomeScreen> {
                     child: const Text('Reject'),
                     onPressed: () {
                       Navigator.of(context).pop();
-                      _rejectRequest(index);
+                      _rejectRequest(request);
                     },
                   ),
                 ],
@@ -267,14 +245,14 @@ class HomeScreenState extends State<HomeScreen> {
                   child: const Text('Approve'),
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
-                    showVehicleSelectionDialog(index, request);
+                    showVehicleSelectionDialog(request);
                   },
                 ),
                 TextButton(
                   child: const Text('Reject'),
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
-                    _rejectRequest(index);
+                    _rejectRequest(request);
                   },
                 ),
               ],
@@ -286,7 +264,7 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _approveRequest(
-      int index, Map<String, dynamic> request, String vehicleNumber) async {
+      Map<String, dynamic> request, String vehicleNumber) async {
     try {
       await FirebaseFirestore.instance
           .collection('bookings')
@@ -294,11 +272,6 @@ class HomeScreenState extends State<HomeScreen> {
           .update({
         'status': 'approved',
         'vehicleNumber': vehicleNumber,
-      });
-
-      setState(() {
-        _approvedStatus[index] = true;
-        _requests.removeAt(index);
       });
 
       LoggerService.info('Request approved with vehicle $vehicleNumber');
@@ -319,18 +292,13 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _rejectRequest(int index) async {
+  Future<void> _rejectRequest(Map<String, dynamic> request) async {
     try {
       await FirebaseFirestore.instance
           .collection('bookings')
-          .doc(_requests[index]['docId'])
+          .doc(request['docId'])
           .update({
         'status': 'rejected',
-      });
-
-      setState(() {
-        _approvedStatus[index] = true;
-        _requests.removeAt(index);
       });
 
       LoggerService.info('Request denied');
@@ -419,7 +387,6 @@ class HomeScreenState extends State<HomeScreen> {
         ),
         child: Column(
           children: <Widget>[
-            // Top bar with rounded corners
             Container(
               margin: const EdgeInsets.all(16.0),
               padding: const EdgeInsets.all(16.0),
@@ -444,56 +411,60 @@ class HomeScreenState extends State<HomeScreen> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: _requests.length,
-                itemBuilder: (context, index) {
-                  if (_approvedStatus[index]) {
-                    return const SizedBox.shrink();
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: _databaseService.streamBookingsByStatus('pending'),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
                   }
-                  return Container(
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 8.0),
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10.0),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 5.0,
-                          offset: Offset(0, 2),
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('No pending requests'));
+                  }
+                  final requests = snapshot.data!;
+                  return ListView.builder(
+                    itemCount: requests.length,
+                    itemBuilder: (context, index) {
+                      final request = requests[index];
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10.0),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 5.0,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${index + 1}. Request from: ${_requests[index]['uName']}',
-                            style: const TextStyle(fontSize: 18.0),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1, // Limit to one line
-                          ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${index + 1}. Request from: ${request['uName']}',
+                                style: const TextStyle(fontSize: 18.0),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.visibility_sharp),
+                              onPressed: () => _showDetailsDialog(request),
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.visibility_sharp),
-                          onPressed: () => _showDetailsDialog(index),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               ),
             ),
           ],
         ),
-      ),
-      // Reload button
-      floatingActionButton: FloatingActionButton(
-        onPressed: _fetchRequestsFromFirestore,
-        backgroundColor: Colors.deepPurple,
-        child: const Icon(Icons.refresh),
       ),
     );
   }
