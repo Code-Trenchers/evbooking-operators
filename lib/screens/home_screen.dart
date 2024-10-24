@@ -82,23 +82,10 @@ class HomeScreenState extends State<HomeScreen> {
     Map<String, dynamic> request = _requests[index];
     String? selectedVehicle;
     void showVehicleSelectionDialog(int index, Map<String, dynamic> request) {
-      List<String> vehicleNumbers = [
-        '1',
-        '2',
-        '3',
-        '4',
-        '5',
-        '6',
-        '7',
-        '8',
-        '9',
-        '10',
-        '11',
-        '12',
-        '13',
-        '14',
-        '15'
-      ];
+      List<String> vehicleNumbers = [];
+      for (var i = 1; i <= 15; i++) {
+        vehicleNumbers.add(i.toString());
+      }
 
       showDialog(
         context: context,
