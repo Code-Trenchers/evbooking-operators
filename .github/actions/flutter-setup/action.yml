@@ -31,4 +31,4 @@ runs:
     
     - name: Configure firebase options
       shell: bash
-      run: echo "${{ inputs.firebase-options }}" | base64 -d > ./lib/firebase_options.dart
+      run: echo "${{ inputs.firebase-options }}" > ./lib/firebase_options.dart
