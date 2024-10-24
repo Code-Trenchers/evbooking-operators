@@ -22,7 +22,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _user = FirebaseAuth.instance.currentUser;
+    _user = _authService.currentUser;
   }
 
   void _showDetailsDialog(Map<String, dynamic> request) {
