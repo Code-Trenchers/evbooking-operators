@@ -5,6 +5,7 @@ import 'package:evbooking_operators/screens/login_screen.dart';
 import 'package:evbooking_operators/services/auth_service.dart';
 import 'package:evbooking_operators/services/logger_service.dart';
 import 'package:evbooking_operators/services/database_service.dart';
+import 'package:evbooking_operators/screens/booking_history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,10 +17,7 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   User? _user;
   List<Map<String, dynamic>> _requests = [];
-  final List<Map<String, dynamic>> _approvedLogs = [];
   List<bool> _approvedStatus = [];
-  int _approvalCount = 0;
-  int _cancellationCount = 0;
   final DatabaseService _databaseService = DatabaseService();
   final AuthService _authService = AuthService();
 
@@ -34,7 +32,7 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       LoggerService.info('Fetching pending requests from Firestore');
       List<Map<String, dynamic>>? fetchedRequests =
-          await _databaseService.fetchBookings();
+          await _databaseService.fetchBookingsByStatus('pending');
 
       setState(() {
         _requests = fetchedRequests;
@@ -299,8 +297,6 @@ class HomeScreenState extends State<HomeScreen> {
       });
 
       setState(() {
-        _approvedLogs.insert(0, {...request, 'vehicleNumber': vehicleNumber});
-        _approvalCount++;
         _approvedStatus[index] = true;
         _requests.removeAt(index);
       });
@@ -333,7 +329,6 @@ class HomeScreenState extends State<HomeScreen> {
       });
 
       setState(() {
-        _cancellationCount++;
         _approvedStatus[index] = true;
         _requests.removeAt(index);
       });
@@ -353,42 +348,6 @@ class HomeScreenState extends State<HomeScreen> {
         );
       }
     }
-  }
-
-  void _showEvLogs() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Ev Recent Logs'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Total Approvals: $_approvalCount'),
-              Text('Total Cancellations: $_cancellationCount'),
-              const SizedBox(height: 10),
-              ..._approvedLogs.take(2).map((log) {
-                return ListTile(
-                  title: Text('Approved: ${log['uEmail']}'),
-                  subtitle: Text(
-                      'From: ${log['currentLocation']} To: ${log['destination']}'),
-                );
-              }),
-              if (_approvedLogs.length > 2)
-                Text('And ${_approvedLogs.length - 2} more...'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -423,11 +382,16 @@ class HomeScreenState extends State<HomeScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.library_books),
-              title: const Text('Recent Approval'),
+              leading: const Icon(Icons.history),
+              title: const Text('Booking History'),
               onTap: () {
                 Navigator.pop(context);
-                _showEvLogs();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BookingHistoryScreen(),
+                  ),
+                );
               },
             ),
             ListTile(
