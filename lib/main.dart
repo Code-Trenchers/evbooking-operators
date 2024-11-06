@@ -18,7 +18,7 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   final AuthService authService = AuthService();
-  MyApp({super.key}); // Hello
+  MyApp({super.key});    // Hello
 
   @override
   Widget build(BuildContext context) {

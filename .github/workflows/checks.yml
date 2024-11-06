@@ -6,9 +6,6 @@ on:
     paths:
       - '**/*.dart'
 
-env:
-  FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-
 jobs:
   flutter-check:
     name: Flutter Checks
